@@ -154,7 +154,7 @@ class TMDBApi:
         for season, season_data in self.series_data['seasons'].items():
             for episode, episode_details in season_data['episodes'].items():
                 if self.match_episode(movie_name, description, episode_details):
-                    print(f"Match found - Season: {season}, Episode: {episode}, Title: {movie_name}")
+                    print(f"Match found - Season: {season}, Episode: {episode}\nTitle: {movie_name}\nDescription: {description}")
 #                    print("Available attributes:")
 #                    for key, value in episode_details.items():
 #                        print(f"- {key}: {value}")
