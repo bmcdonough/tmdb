@@ -165,7 +165,7 @@ class TMDBApi:
                     print(f"File copied and renamed: {dest_path}\n")
                     return  # Stop after first match
 
-        print(f"No match found for {file_path}: {movie_name}\n")
+        print(f"***\nNo match found for {file_path}\n{movie_name}\n{description}\n***\n")
 
     def match_episode(self, movie_name, description, episode_details):
         episode_name = episode_details.get('name', '').lower()
