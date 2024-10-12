@@ -145,11 +145,11 @@ class TMDBApi:
         a_format = movie_info['Audio'][0]['format']
         dot_fname = re.sub(r'\s+', '.', self.series_data['name'])
 
+        print(f"working on: {file_path}")
         for season, season_data in self.series_data['seasons'].items():
             for episode, episode_details in season_data['episodes'].items():
                 if self.match_episode(movie_name, description, episode_details):
-                    print(f"Match found for {file_path}")
-                    print(f"Season: {season}, Episode: {episode}, Title: {movie_name}")
+                    print(f"Match found - Season: {season}, Episode: {episode}, Title: {movie_name}")
 #                    print("Available attributes:")
 #                    for key, value in episode_details.items():
 #                        print(f"- {key}: {value}")
@@ -165,7 +165,7 @@ class TMDBApi:
                     print(f"File copied and renamed: {dest_path}\n")
                     return  # Stop after first match
 
-        print(f"***\nNo match found for {file_path}\n{movie_name}\n{description}\n***\n")
+        print(f"***\nNo match found - {movie_name}\n{description}\n***\n")
 
     def match_episode(self, movie_name, description, episode_details):
         episode_name = episode_details.get('name', '').lower()
