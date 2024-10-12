@@ -10,13 +10,12 @@ from pymediainfo import MediaInfo
 import shutil
 
 class TMDBApi:
-    def __init__(self, source_dir, dest_dir, tv_series):
+    def __init__(self, source_dir, tv_series):
         self.load_env()
         self.tmdb_token = os.getenv('TMDB_ACCESS_TOKEN')
         if not self.tmdb_token:
             raise ValueError("Missing TMDB_ACCESS_TOKEN in environment variables")
         self.source_dir = source_dir
-        self.dest_dir = dest_dir
         self.tv_series = tv_series
         self.series_data = None
 
@@ -157,10 +156,12 @@ class TMDBApi:
 #                    print("\n")
                     
                     # Copy and rename the file
-                    src_fname, src_extension = os.path.splitext(os.path.basename(file_path))
+                    directory_path, src_file_name = os.path.split(file_path)
+                    src_fname_wout_ext, src_extension = os.path.splitext(src_file_name)
                     new_filename = f"{dot_fname}.S{season:02d}E{episode:02d}.{height}p.{v_format}.{a_format}{src_extension}"
-                    dest_path = os.path.join(self.dest_dir, new_filename)
-                    shutil.copy2(file_path, dest_path)
+                    dest_path = os.path.join(directory_path, new_filename)
+                    # old name, new name
+                    os.rename(file_path, dest_path)
                     print(f"File copied and renamed: {dest_path}\n")
                     return  # Stop after first match
 
@@ -189,11 +190,10 @@ class TMDBApi:
 def main():
     parser = argparse.ArgumentParser(description="Process video files and match with TMDB data")
     parser.add_argument("source_dir", help="Source directory containing video files")
-    parser.add_argument("dest_dir", help="Destination directory for processed files")
     parser.add_argument("tv_series", help="Name of the TV series to search for")
     args = parser.parse_args()
 
-    tmdb_api = TMDBApi(args.source_dir, args.dest_dir, args.tv_series)
+    tmdb_api = TMDBApi(args.source_dir, args.tv_series)
     exit_code = tmdb_api.run()
     if exit_code == 0:
         print("Main completed successfully.")
