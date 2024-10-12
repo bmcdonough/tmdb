@@ -136,6 +136,8 @@ class TMDBApi:
             print()  # Add a newline for better readability
 
     def process_single_video(self, file_path):
+        print(f"working on: {file_path}")
+
         movie_info = self.extract_movie_info(file_path)
 #        self.print_movie_info(movie_info)
         movie_name = movie_info['General'][0]['movie_name']
@@ -145,7 +147,6 @@ class TMDBApi:
         a_format = movie_info['Audio'][0]['format']
         dot_fname = re.sub(r'\s+', '.', self.series_data['name'])
 
-        print(f"working on: {file_path}")
         for season, season_data in self.series_data['seasons'].items():
             for episode, episode_details in season_data['episodes'].items():
                 if self.match_episode(movie_name, description, episode_details):
