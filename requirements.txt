@@ -1,2 +1,3 @@
+pymediainfo
 python-dotenv  #import dotenv
 requests
