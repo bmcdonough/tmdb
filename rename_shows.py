@@ -144,7 +144,7 @@ class TMDBApi:
         description = movie_info['General'][0]['description']
         height = movie_info['Video'][0]['height']
         v_format = movie_info['Video'][0]['format']
-        if movie_info['Audio']:
+        if "Audio" in movie_info.keys():
             a_format = movie_info['Audio'][0]['format']
         else:
             print(f"WARNING, this file is missing audio")
