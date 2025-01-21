@@ -34,7 +34,11 @@ class TMDBApi:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
             response_json = json.loads(response.text)
-            return response_json['status_message']
+            if 'status_message' in response_json:
+                return response_json['status_message']
+            elif 'success' in response_json:
+                return response_json['success']
+            else return json.loads(response.text)
         else:
             return json.loads(response.text)
 
