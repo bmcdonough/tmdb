@@ -146,7 +146,10 @@ class TMDBApi:
         movie_info = self.extract_movie_info(file_path)
 #        self.print_movie_info(movie_info)
         movie_name = movie_info['General'][0]['movie_name']
-        description = movie_info['General'][0]['description']
+        if 'description' in movie_info['General'][0]:
+            description = movie_info['General'][0]['description']
+        else:
+            description = ""
         height = movie_info['Video'][0]['height']
         v_format = movie_info['Video'][0]['format']
         if "Audio" in movie_info.keys():
