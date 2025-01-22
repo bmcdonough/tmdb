@@ -38,7 +38,8 @@ class TMDBApi:
                 return response_json['status_message']
             elif 'success' in response_json:
                 return response_json['success']
-            else return json.loads(response.text)
+            else:
+                return json.loads(response.text)
         else:
             return json.loads(response.text)
 
