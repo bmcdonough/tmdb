@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import argparse
+import ffmpeg
 import json
 import os
 import re
 # import shutil
+import subprocess
 import urllib.parse
 
 import requests
@@ -192,6 +194,63 @@ class TMDBApi:
             or term == str(episode_number)
             for term in search_terms
         )
+    
+    def set_mkv_title(self, file_path, title):
+        """Sets the title metadata in an MKV file."""
+
+        try:
+            subprocess.run(
+                ["mkvpropedit", file_path, "--edit", "info", "--set", f"title={title}"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            print(f"Title set to '{title}' successfully.")
+        except subprocess.CalledProcessError as e:
+            print(f"Error setting title: {e.stderr}")
+        except FileNotFoundError:
+            print("mkvpropedit not found. Make sure MKVToolNix is installed.")
+
+    def set_mkv_tag(self, file_path, tagName, tagValue):
+        """Sets a tag metadata in an MKV file."""
+
+        try:
+            subprocess.run(
+                ["mkvpropedit", file_path, "--edit", "info", "--set", f"tag:{tagName}={tagValue}"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            print(f"Tag {tagName} set to '{tagValue}' successfully.")
+        except subprocess.CalledProcessError as e:
+            print(f"Error setting tag: {e.stderr}")
+        except FileNotFoundError:
+            print("mkvpropedit not found. Make sure MKVToolNix is installed.")
+
+    def get_ffmpeg_version(self):
+        """Captures the FFmpeg version."""
+        try:
+            result = subprocess.run(['ffmpeg', '-version'], capture_output=True, text=True)
+            output_lines = result.stdout.splitlines()
+            version_line = output_lines[0]
+            version_string = version_line.split("version ")[1].split(" ")[0]
+            return version_string
+        except FileNotFoundError:
+            return "FFmpeg not found"
+        except IndexError:
+            return "Could not parse FFmpeg version"
+
+    def update_metadata(self, input_file, output_file, metadata):
+        """Updates the 'Writing application' metadata."""
+        try:
+            ffmpeg.input(input_file).output(
+                output_file,
+                metadata,
+                c='copy'  # Copy streams without re-encoding
+            ).run(overwrite_output=True)
+            print(f"Metadata updated successfully. Output file: {output_file}")
+        except ffmpeg.Error as e:
+            print(f"Error updating metadata: {e.stderr.decode()}")
 
     def process_single_video(self, file_path):
         print(f"working on: {file_path}")
@@ -219,8 +278,14 @@ class TMDBApi:
         else:
             video_title = ""
 
+        if "file_name" in movie_info["General"][0]:
+            general_file_name = movie_info["General"][0]["file_name"]
+        else:
+            general_file_name = ""
+
+
         # check if the title contains S##E##
-        for item in (general_movie_name, general_title, video_title):
+        for item in (general_movie_name, general_title, video_title, general_file_name):
             if item:
                 result = self.parse_name_season_episode(item)
                 season_num, episode_num = result['season'], result['episode']
@@ -251,9 +316,9 @@ class TMDBApi:
 
         for season, season_data in self.series_data["seasons"].items():
             for episode, episode_details in season_data["episodes"].items():
-                print(f"season: {season}, episode: {episode}; season_num: {season_num}, episode_num: {episode_num}")
-                if self.match_episode(episode_details, season_num, episode_num):
-#                if self.match_episode(episode_details, general_movie_name, general_movie_name, video_title, season_num, episode_num):
+#                print(f"season: {season}, episode: {episode}; season_num: {season_num}, episode_num: {episode_num}")
+#                if self.match_episode(episode_details, season, episode):
+                if self.match_episode(episode_details, general_movie_name, general_movie_name, video_title, season_num, episode_num):
 #                    print(
 #                        f"Match found - Season: {season}"
 #                        f", Episode: {episode}"
@@ -265,6 +330,21 @@ class TMDBApi:
                         print(f"- {key}: {value}")
                     print("\n")
 
+                    ffmpeg_version = self.get_ffmpeg_version()
+                    if "FFmpeg not found" in ffmpeg_version or "Could not parse" in ffmpeg_version:
+                        print(ffmpeg_version)
+                    else:
+                        print(f"FFmpeg version: {ffmpeg_version}")
+#                        self.update_metadata(input_file, output_file, ffmpeg_version)
+
+                    new_metadata = {
+                        'title': episode_details['name'],
+                        'description': episode_details['overview'],
+                        'writing_application': f'ffmpeg {ffmpeg_version}',
+                        }
+#                    self.set_mkv_title(file_path, episode_details['name'])
+#                    self.set_mkv_tag(file_path, "DESCRIPTION", episode_details['overview'])
+
                     # Copy and rename the file
                     directory_path, src_file_name = os.path.split(file_path)
                     src_fname_wout_ext, src_extension = os.path.splitext(src_file_name)
@@ -272,13 +352,14 @@ class TMDBApi:
                         f"{dot_fname}"
                         f".S{season:02d}E{episode:02d}"
                         f".{height}p"
-                        f".{v_format}"
-                        f".{a_format}"
+                        f".{v_format.lower()}"
+                        f".{a_format.lower()}"
                         f"{src_extension}"
                     )
                     dest_path = os.path.join(directory_path, new_filename)
                     # old name, new name
-                    os.rename(file_path, dest_path)
+#                    os.rename(file_path, dest_path)
+                    self.update_metadata(file_path, dest_path, new_metadata)
                     print(f"File copied and renamed: {dest_path}\n")
                     return  # Stop after first match
 
